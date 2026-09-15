@@ -1,0 +1,5 @@
+# Install after requirements.txt in the same project environment.
+fastapi==0.141.1
+starlette==1.6.0
+uvicorn[standard]==0.52.4
+python-multipart==0.0.32

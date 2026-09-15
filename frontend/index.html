@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Two-stage SAR oil-spill analysis for Saudi waters.">
+    <title>Saudi Oil Spill Detection</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/style.css">
+  </head>
+  <body>
+    <aside class="rail" aria-label="Scene controls">
+      <div class="rail-brand">
+        <span class="eyebrow">SAR OPERATIONS</span>
+        <strong>Scene control</strong>
+      </div>
+
+      <section class="rail-section">
+        <label class="section-label" for="scene-select">Demo scene</label>
+        <select id="scene-select" aria-label="Demo scene"></select>
+      </section>
+
+      <section class="rail-section">
+        <span class="section-label">Local source</span>
+        <label class="upload-control" for="scene-upload">
+          <span>Upload GeoTIFF</span>
+          <span class="upload-detail" id="upload-name">No file selected</span>
+        </label>
+        <input id="scene-upload" type="file" accept=".tif,.tiff,image/tiff">
+      </section>
+
+      <section class="rail-section">
+        <span class="section-label">Display layer</span>
+        <div class="segmented" role="radiogroup" aria-label="Display layer">
+          <button type="button" class="segment is-active" data-layer="mask" aria-pressed="true">Mask</button>
+          <button type="button" class="segment" data-layer="footprint" aria-pressed="false">Footprint</button>
+          <button type="button" class="segment" data-layer="sar" aria-pressed="false">SAR</button>
+          <button type="button" class="segment segment-wide" data-layer="undetected" aria-pressed="false">Undetected dark</button>
+        </div>
+      </section>
+
+      <section class="rail-section rail-toggle-row">
+        <div>
+          <span class="section-label">Region labels</span>
+          <span class="control-note">Region IDs at mask centroids</span>
+        </div>
+        <label class="switch" aria-label="Show region labels">
+          <input id="region-labels-toggle" type="checkbox" checked>
+          <span class="switch-track"></span>
+        </label>
+      </section>
+
+      <section class="rail-section rail-toggle-row">
+        <div>
+          <span class="section-label">Rejected coverage</span>
+          <span class="control-note">Merged screened-out tiles</span>
+        </div>
+        <label class="switch" aria-label="Show merged rejected coverage">
+          <input id="rejected-toggle" type="checkbox">
+          <span class="switch-track"></span>
+        </label>
+      </section>
+
+      <div class="rail-status" id="rail-status" data-state="ready">
+        <span class="status-mark"></span>
+        <span id="rail-status-text">Ready</span>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <header class="top-strip">
+        <div class="title-block">
+          <h1>Saudi Oil Spill Detection</h1>
+          <p class="subtitle">Two-stage SAR screening, segmentation and geospatial triage for analyst review.</p>
+        </div>
+        <div class="context-chips" aria-label="Analysis context">
+          <div class="chip"><span>Scene</span><strong id="chip-scene">—</strong></div>
+          <div class="chip"><span>Region</span><strong id="chip-region">—</strong></div>
+        </div>
+      </header>
+
+      <section class="metric-band" aria-label="Scene metrics">
+        <div class="metric-cell">
+          <span>Total detected area</span>
+          <div><strong id="metric-area">—</strong><small>km²</small></div>
+        </div>
+        <div class="metric-cell">
+          <span>Regions</span>
+          <div><strong id="metric-regions">—</strong></div>
+        </div>
+        <div class="metric-cell">
+          <span>Largest region</span>
+          <div><strong id="metric-largest">—</strong><small>km²</small></div>
+        </div>
+        <div class="metric-cell">
+          <span>Nearest coast</span>
+          <div><strong id="metric-coast">—</strong><small id="metric-coast-unit">km</small></div>
+        </div>
+        <div class="metric-cell">
+          <span>Alert</span>
+          <div><strong id="metric-alert">—</strong></div>
+        </div>
+        <div class="metric-cell confidence-metric">
+          <span>Confidence</span>
+          <div><strong id="metric-confidence">—</strong></div>
+        </div>
+      </section>
+
+      <section class="undetected-panel panel" id="undetected-panel" aria-labelledby="undetected-title" hidden>
+        <div class="diagnostic-heading">
+          <div>
+            <p class="eyebrow">POST-HOC DIAGNOSTIC</p>
+            <h2 id="undetected-title">Undetected dark area</h2>
+          </div>
+          <div class="diagnostic-total">
+            <span>Total</span>
+            <strong><span id="dark-total-area">—</span> km²</strong>
+            <small><span id="dark-total-regions">—</span> regions</small>
+          </div>
+        </div>
+        <div class="diagnostic-categories">
+          <article class="diagnostic-category rejected-stage1">
+            <span>Rejected by Stage 1</span>
+            <strong><span id="dark-rejected-area">—</span> km²</strong>
+            <small><span id="dark-rejected-percent">—</span> · <span id="dark-rejected-regions">—</span> regions</small>
+          </article>
+        </div>
+        <p class="diagnostic-caption">Dark areas are not necessarily oil — wind slicks, calm water and algae also appear dark. This layer shows what the system did not flag and why, not what it got wrong.</p>
+      </section>
+
+      <section class="analysis-grid">
+        <article class="imagery-panel panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">PRIMARY EVIDENCE</p>
+              <h2>SAR scene</h2>
+            </div>
+            <span class="layer-readout" id="layer-readout">MASK OVERLAY</span>
+          </div>
+          <div class="image-frame">
+            <img id="scene-image" alt="Sentinel-1 SAR scene analysis" draggable="false">
+            <div class="zoom-controls" aria-label="Image zoom controls">
+              <button id="zoom-out" type="button" aria-label="Zoom out" title="Zoom out">−</button>
+              <span id="zoom-readout" aria-live="polite">FIT</span>
+              <button id="zoom-in" type="button" aria-label="Zoom in" title="Zoom in">+</button>
+              <button id="zoom-reset" type="button" aria-label="Reset zoom to fit" title="Reset to fit">FIT</button>
+            </div>
+            <div class="loading-state" id="loading-state" hidden>
+              <strong>Running analysis</strong>
+              <span id="loading-elapsed">0.0 s</span>
+            </div>
+          </div>
+          <div class="overlay-legend" id="rejected-legend" hidden>
+            <span class="rejected-legend-swatch" aria-hidden="true"></span>
+            <span>Yellow tint: tiles rejected by Stage 1. Coverage is tile-resolution because Stage 1 classifies whole 256 × 256 tiles; square boundaries are intentional and do not follow feature edges.</span>
+          </div>
+          <div class="overlay-legend diagnostic-legend" id="undetected-legend" hidden>
+            <span><i class="legend-swatch detected-swatch" aria-hidden="true"></i>Detected mask</span>
+            <span><i class="legend-swatch rejected-stage1-swatch" aria-hidden="true"></i>Rejected by Stage 1</span>
+          </div>
+          <p class="image-caption" id="image-caption">Waiting for scene metadata.</p>
+        </article>
+
+        <article class="regions-panel panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">MEASURED OUTPUT</p>
+              <h2>Detected regions</h2>
+            </div>
+            <span class="region-count" id="region-count-label">—</span>
+          </div>
+          <div id="no-regions" class="no-regions" hidden>
+            <strong>No oil detected</strong>
+            <p>No regions remain after the configured morphology and minimum-blob filters.</p>
+          </div>
+          <div class="table-scroll" id="region-table-wrap">
+            <table class="data-table regions-table">
+              <colgroup>
+                <col class="region-col">
+                <col class="area-col">
+                <col class="lat-col">
+                <col class="lon-col">
+                <col class="coast-col">
+                <col class="score-col">
+                <col class="alert-col">
+                <col class="confidence-col">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Region</th>
+                  <th class="numeric">Area</th>
+                  <th class="numeric">LAT</th>
+                  <th class="numeric">LON</th>
+                  <th class="numeric">COAST</th>
+                  <th class="numeric score-heading">SCORE<small>not calibrated</small></th>
+                  <th>ALERT</th>
+                  <th title="Learned segmenter support; not calibrated probability">CONF</th>
+                </tr>
+              </thead>
+              <tbody id="region-table-body"></tbody>
+            </table>
+          </div>
+          <details class="geometry-details" id="geometry-details">
+            <summary>Region geometry details</summary>
+            <div class="table-scroll">
+              <table class="data-table compact-table">
+                <thead><tr><th>Region</th><th class="numeric">Major axis px</th><th class="numeric">Minor axis px</th><th class="numeric">Orientation °</th></tr></thead>
+                <tbody id="geometry-table-body"></tbody>
+              </table>
+            </div>
+          </details>
+        </article>
+      </section>
+
+      <footer class="exports-row">
+        <div>
+          <p class="eyebrow">DELIVERABLES</p>
+          <strong>Scene exports</strong>
+        </div>
+        <nav aria-label="Scene exports">
+          <a id="export-regions" class="export-link" href="#" download>Region table CSV</a>
+          <a id="export-mask" class="export-link" href="#" download>Mask GeoTIFF</a>
+          <a id="export-view" class="export-link" href="#" download>Current view PNG</a>
+        </nav>
+      </footer>
+
+      <div class="error-panel" id="error-panel" role="alert" hidden>
+        <strong>Analysis failed</strong>
+        <pre id="error-message"></pre>
+      </div>
+    </main>
+
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>

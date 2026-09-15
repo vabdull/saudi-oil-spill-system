@@ -1,0 +1,5 @@
+# Developer-only tools; install after both runtime requirements files.
+black==25.1.0
+httpx==0.28.1
+pytest==8.4.1
+ruff==0.12.7

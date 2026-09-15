@@ -1,0 +1,19 @@
+# Published inference uses CUDA bf16. Pin the matching PyTorch
+# distribution explicitly so a clean install does not silently select CPU-only
+# wheels from PyPI and then fail at runtime.
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+numpy==2.2.6
+rasterio==1.4.3
+scikit-image==0.25.2
+scipy==1.15.3
+geopandas==1.0.1
+shapely==2.1.1
+pyproj==3.7.1
+matplotlib==3.10.3
+Pillow==11.3.0
+pandas==2.3.0
+torch==2.6.0+cu124
+torchvision==0.21.0+cu124
+timm==1.0.21
+segmentation-models-pytorch==0.5.0

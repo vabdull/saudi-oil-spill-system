@@ -1,0 +1,33 @@
+references:
+  - type: dataset
+    title: "Refined Deep-SAR Oil Spill (SOS) dataset"
+    authors:
+      - family-names: "Zuenko"
+        given-names: "Denis"
+      - family-names: "Khaidarova"
+        given-names: "Ilvira"
+    doi: "10.5281/zenodo.15298010"
+    year: 2025
+  - type: dataset
+    title: "Sentinel-1 SAR Oil spill image dataset for train, validate, and test deep learning models. Part I"
+    authors: &trujillo-authors
+      - family-names: "Trujillo-Acatitla"
+        given-names: "Rubicel"
+      - family-names: "Tuxpan-Vargas"
+        given-names: "José"
+      - family-names: "Ovando-Vázquez"
+        given-names: "Cesaré"
+      - family-names: "Monterrubio-Martínez"
+        given-names: "Erandi"
+    doi: "10.5281/zenodo.8346860"
+    year: 2023
+  - type: dataset
+    title: "Sentinel-1 SAR Oil spill image dataset for train, validate, and test deep learning models. Part II"
+    authors: *trujillo-authors
+    doi: "10.5281/zenodo.8253899"
+    year: 2023
+  - type: dataset
+    title: "Sentinel-1 SAR Oil spill image dataset for train, validate, and test deep learning models. Part III"
+    authors: *trujillo-authors
+    doi: "10.5281/zenodo.13761290"
+    year: 2024

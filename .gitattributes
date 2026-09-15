@@ -1,0 +1,11 @@
+# Keep source and documentation line endings stable across platforms.
+*.py text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.toml text eol=lf
+*.cff text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
